@@ -12,7 +12,7 @@ description: ".NET Core unit testing code coverage and reporting with coverlet, 
 
 # .NET Core unit testing code coverage
 
-This sample solution includes a class library that is unit tested by two xUnit test projects. The corresponding article, [use code coverage for unit testing](https://docs.microsoft.com/dotnet/core/testing/unit-testing-code-coverage) details the usage of C#, xUnit, coverlet, and ReportGenerator.
+This sample solution includes a class library that is unit-tested by two xUnit test projects. The corresponding article, [use code coverage for unit testing](https://docs.microsoft.com/dotnet/core/testing/unit-testing-code-coverage) details the usage of C#, xUnit, coverlet, and ReportGenerator.
 
 ## Sample prerequisites
 
