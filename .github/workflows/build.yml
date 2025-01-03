@@ -8,7 +8,7 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  build:
+  build-dotnet-angular:
     name: Build and analyze
     runs-on: windows-latest
     
@@ -40,9 +40,33 @@ jobs:
         run: |
           New-Item -Path .\.sonar\scanner -ItemType Directory
           dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
-      - name: Build and analyze
+
+      # Determine which project had its files modified
+      - name: Get changed files in dotnet-angular
+        id: changed-files-dotnet-angular
+        uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            dotnet-angular/**
+      - name: Get changed files in dotnet-xunit-coverlet
+        id: changed-files-dotnet-xunit-coverlet
+        uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            dotnet-xunit-coverlet/**
+
+      # Build and analyze projects depending on project modified (linked to id of changed-files)
+      - name: Build and analyze dotnet-angular
+        if: steps.changed-files-dotnet-angular.outputs.any_changed == 'true'
         shell: powershell
         run: |
           .\.sonar\scanner\dotnet-sonarscanner begin /k:"dotnet-angular" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}"
           dotnet build dotnet-angular/Dotnet-Angular.sln 
+          .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+      - name: Build and analyze dotnet-xunit-coverlet
+        if: steps.changed-files-dotnet-xunit-coverlet.outputs.any_changed == 'true'
+        shell: powershell
+        run: |
+          .\.sonar\scanner\dotnet-sonarscanner begin /k:"dotnet-combo-xunit-coverlet" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}"
+          dotnet build dotnet-xunit-coverlet/XUnit.Coverage.sln
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
