@@ -51,6 +51,7 @@ jobs:
             dotnet-xunit-coverlet/**
       - name: Run step if any file(s) in the .github folder change
         if: steps.changed-files.outputs.any_changed == 'true'
+        shell: bash
         env:
           ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
         run: |
