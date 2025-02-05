@@ -1,4 +1,4 @@
-name: Build
+name: Build and scan separate or both projects
 
 on:
   push:
@@ -12,7 +12,7 @@ jobs:
   build-dotnet-angular:
     name: Build and analyze
     runs-on: windows-latest
-    
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -62,7 +62,7 @@ jobs:
         shell: powershell
         run: |
           .\.sonar\scanner\dotnet-sonarscanner begin /k:"dotnet-angular" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}"
-          dotnet build dotnet-angular/Dotnet-Angular.sln 
+          dotnet build dotnet-angular/Dotnet-Angular.sln
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
       - name: Build and analyze dotnet-xunit-coverlet
         if: steps.changed-files-dotnet-xunit-coverlet.outputs.any_changed == 'true'
