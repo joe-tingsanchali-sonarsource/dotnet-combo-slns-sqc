@@ -66,7 +66,7 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true' && contains(steps.changed-files.outputs.all_changed_files, 'dotnet-angular')
         shell: powershell
         run: |
-          .\.sonar\scanner\dotnet-sonarscanner begin /k:"dotnet-angular" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}"
+          .\.sonar\scanner\dotnet-sonarscanner begin /k:"dotnet-angular" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.links.scm="https://github.com/joe-tingsanchali-sonarsource/dotnet-combo-slns" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}"
           dotnet build dotnet-angular/Dotnet-Angular.sln
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
       - name: Build and analyze dotnet-xunit-coverlet
