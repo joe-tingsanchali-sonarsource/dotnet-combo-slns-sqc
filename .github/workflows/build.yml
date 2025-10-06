@@ -1,5 +1,4 @@
-name: Build and scan separate or both projects
-
+name: SonarQube Cloud - Build and scan separate or both projects
 on:
   push:
     branches:
@@ -9,39 +8,37 @@ on:
   workflow_dispatch: null
 
 jobs:
-  build-dotnet-angular:
+  build:
     name: Build and analyze
     runs-on: windows-latest
-
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: 17
           distribution: 'zulu' # Alternative distribution options are available.
-      - name: Cache SonarQube packages
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: Cache SonarQube Cloud packages
         uses: actions/cache@v4
         with:
-          path: ~\.sonar\cache
+          path: ~\sonar\cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
-      - name: Cache SonarQube scanner
+      - name: Cache SonarQube Cloud scanner
         id: cache-sonar-scanner
         uses: actions/cache@v4
         with:
-          path: .\.sonar\scanner
+          path: ${{ runner.temp }}\scanner
           key: ${{ runner.os }}-sonar-scanner
           restore-keys: ${{ runner.os }}-sonar-scanner
-      - name: Install SonarQube scanner
+      - name: Install SonarQube Cloud scanner
         if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
         shell: powershell
         run: |
-          New-Item -Path .\.sonar\scanner -ItemType Directory
-          dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
-
+          New-Item -Path ${{ runner.temp }}\scanner -ItemType Directory
+          dotnet tool update dotnet-sonarscanner --tool-path ${{ runner.temp }}\scanner
       - name: Get changed files
         id: changed-files
         uses: tj-actions/changed-files@v45
@@ -60,19 +57,18 @@ jobs:
           for file in ${ALL_CHANGED_FILES}; do
             echo "$file was changed"
           done
-
       # Build and analyze projects depending on project modified (linked to id of changed-files)
       - name: Build and analyze dotnet-angular
         if: steps.changed-files.outputs.any_changed == 'true' && contains(steps.changed-files.outputs.all_changed_files, 'dotnet-angular')
         shell: powershell
         run: |
-          .\.sonar\scanner\dotnet-sonarscanner begin /k:"dotnet-angular" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.links.scm="https://github.com/joe-tingsanchali-sonarsource/dotnet-combo-slns" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" /d:sonar.qualitygate.wait=true
+          ${{ runner.temp }}\scanner\dotnet-sonarscanner begin /k:"joe-tingsanchali-sonarsource_dotnet-combo-slns-sqc-angular" /o:"joe-tingsanchali-sonarsource" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.links.scm="https://github.com/joe-tingsanchali-sonarsource/dotnet-combo-slns-sqc" /d:sonar.qualitygate.wait=true
           dotnet build dotnet-angular/Dotnet-Angular.sln
-          .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+          ${{ runner.temp }}\scanner\dotnet-sonarscannerr end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
       - name: Build and analyze dotnet-xunit-coverlet
         if: steps.changed-files.outputs.any_changed == 'true' && contains(steps.changed-files.outputs.all_changed_files, 'dotnet-xunit-coverlet')
         shell: powershell
         run: |
-          .\.sonar\scanner\dotnet-sonarscanner begin /k:"dotnet-combo-xunit-coverlet" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" /d:sonar.qualitygate.wait=true
+          ${{ runner.temp }}\scanner\dotnet-sonarscanner begin /k:"joe-tingsanchali-sonarsource_dotnet-combo-slns-sqc-dotnet" /o:"joe-tingsanchali-sonarsource" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.links.scm="https://github.com/joe-tingsanchali-sonarsource/dotnet-combo-slns-sqc" /d:sonar.qualitygate.wait=true
           dotnet build dotnet-xunit-coverlet/XUnit.Coverage.sln
-          .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+          ${{ runner.temp }}\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
