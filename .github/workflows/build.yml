@@ -59,16 +59,27 @@ jobs:
           for file in ${ALL_CHANGED_FILES}; do
             echo "$file was changed"
           done
-      # Build and analyze projects depending on project modified depending on file path changes
+      # Determine which projects to scan based on changed files.
+      # A .github change triggers all scans (workflow change may affect any project's analysis).
+      - name: Determine scans to run
+        id: scans
+        if: steps.changed-files.outcome == 'success' && steps.changed-files.outputs.any_changed == 'true'
+        shell: bash
+        run: |
+          github_changed="${{ contains(steps.changed-files.outputs.all_changed_files, '.github') }}"
+          angular_changed="${{ contains(steps.changed-files.outputs.all_changed_files, 'dotnet-angular') }}"
+          xunit_changed="${{ contains(steps.changed-files.outputs.all_changed_files, 'dotnet-xunit-coverlet') }}"
+          echo "angular=$([[ $github_changed == 'true' || $angular_changed == 'true' ]] && echo true || echo false)" >> $GITHUB_OUTPUT
+          echo "xunit=$([[ $github_changed == 'true' || $xunit_changed == 'true' ]] && echo true || echo false)" >> $GITHUB_OUTPUT
       - name: Build and analyze dotnet-angular
-        if: !cancelled() && steps.changed-files.outcome == 'success' && steps.changed-files.outputs.any_changed == 'true' && contains(steps.changed-files.outputs.all_changed_files, 'dotnet-angular') || contains(steps.changed-files.outputs.all_changed_files, '.github')
+        if: !cancelled() && steps.scans.outputs.angular == 'true'
         shell: powershell
         run: |
           ${{ runner.temp }}\scanner\dotnet-sonarscanner begin /k:"joe-tingsanchali-sonarsource-1_dotnet-combo-slns-sqc-angular" /o:"joe-tingsanchali-sonarsource-1" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.links.scm="https://github.com/joe-tingsanchali-sonarsource/dotnet-combo-slns-sqc" /d:sonar.qualitygate.wait=true
           dotnet build dotnet-angular/Dotnet-Angular.sln
           ${{ runner.temp }}\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
       - name: Build and analyze dotnet-xunit-coverlet
-        if: !cancelled() && steps.changed-files.outcome == 'success' && steps.changed-files.outputs.any_changed == 'true' && contains(steps.changed-files.outputs.all_changed_files, 'dotnet-xunit-coverlet') || contains(steps.changed-files.outputs.all_changed_files, '.github')
+        if: !cancelled() && steps.scans.outputs.xunit == 'true'
         shell: powershell
         run: |
           ${{ runner.temp }}\scanner\dotnet-sonarscanner begin /k:"joe-tingsanchali-sonarsource-1_dotnet-combo-slns-sqc-dotnet" /o:"joe-tingsanchali-sonarsource-1" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.links.scm="https://github.com/joe-tingsanchali-sonarsource/dotnet-combo-slns-sqc" /d:sonar.qualitygate.wait=true
